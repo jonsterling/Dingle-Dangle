@@ -58,7 +58,7 @@ module Examples where
     --
     --     δῆτα [ οἶσθα [ τὴν [ εὐρυτείαν [ παρθένον ] ] ] ]
     --
-    test-syntax : ⟦ stage1 sentence ⟧≅ ↑ (` δῆτα ∙ ↑ (` οἶσθα ∙ ↑ (` τὴν ∙ ↑ (` εὐρυτείαν ∙ ↑ ` παρθένον))))
+    test-syntax : ⟦ stage1 sentence ⟧≅ (` δῆτα ∙ (` οἶσθα ∙ (` τὴν ∙ (` εὐρυτείαν ∙ ` παρθένον))))
     test-syntax = refl
 
     ex-closed-form : CTm ⟨ V ⟩
@@ -74,6 +74,6 @@ module Examples where
     --
     --    ⟦οἶσθα⟧(ιz. ⟦παρθένον⟧(z) ∧ ⟦εὐρυτείαν⟧(z))
     --
-    test-semantics : ⟦ ⟦ ex-closed-form ⟧ ⟧≅ ↑ (` w ⟦οἶσθα⟧ ∙ ↑ (` ι ∙ ƛ (↑ (` ∧ ∙ ↑ (` w ⟦παρθένον⟧ ∙ ↑ (var vz)) ∙ ↑ (` w ⟦εὐρυτείαν⟧ ∙ ↑ (var vz))))))
+    test-semantics : ⟦ ⟦ ex-closed-form ⟧ ⟧≅ (` w ⟦οἶσθα⟧ ∙ (` ι ∙ ƛ (` ∧ ∙ (` w ⟦παρθένον⟧ ∙ var vz) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var vz))))
     test-semantics = refl
 

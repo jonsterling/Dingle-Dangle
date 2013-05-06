@@ -18,12 +18,14 @@ open Contexts Ty public
 module Lambda (Axiom : Ty → Set) where
   infixl 8 _∙_
 
+  -- Lambda terms may be axioms, variables, applications and abstractions.
   data Tm (Γ : Con) : Ty → Set where
     `_  : ∀ {σ} → Axiom σ → Tm Γ σ
     var : ∀ {σ} → Var Γ σ → Tm Γ σ
     _∙_ : ∀ {σ τ} → Tm Γ (σ ⇒ τ) → Tm Γ σ → Tm Γ τ
     ƛ   : ∀ {σ τ} → Tm (Γ < σ) τ → Tm Γ (σ ⇒ τ)
 
+  -- Closed terms do not have variables or abstractions.
   data CTm : Ty → Set where
     `_ : ∀ {σ} → Axiom σ → CTm σ
     _∙_ : ∀ {σ τ} → CTm (σ ⇒ τ) → CTm σ → CTm τ
@@ -130,7 +132,7 @@ module Lambda (Axiom : Ty → Set) where
       var : ∀{Γ σ} → Var Γ σ → Ne Γ σ
       _∙_ : ∀{Γ σ τ} → Ne Γ (σ ⇒ τ) → Nm Γ σ → Ne Γ τ
       `_ : ∀{Γ σ} → Axiom σ → Ne Γ σ
-      
+  
   mutual
     [_] : Ty → Con → Set
     [ T ] Γ = (∀ {Δ} → Ren Γ Δ → Ne Δ T) + (∀ {Δ} → Ren Γ Δ → [ T ]act Δ)
@@ -161,21 +163,35 @@ module Lambda (Axiom : Ty → Set) where
   renEnv le ε = ε
   renEnv le (g < s) = renEnv le g < ren[] le s
 
-  get : forall {G Γ T} → Var G T → Env G Γ → [ T ] Γ
+  get : ∀ {G Γ T} → Var G T → Env G Γ → [ T ] Γ
   get vz     (g < s) = s
   get (vs x) (g < t) = get x g
 
-  ev : forall {G Γ T} → Tm G T → Env G Γ → [ T ] Γ
+  ev : ∀ {G Γ T} → Tm G T → Env G Γ → [ T ] Γ
   ev (` x) g = inl (λ _ → ` x)
   ev (var x) g = get x g
   ev (f ∙ s) g = ev f g $$ ev s g
   ev (ƛ t) g = inr λ le s → ev t (renEnv le g < s)
 
-  nm : forall {G Γ τ} → Tm G τ → Env G Γ → Nm Γ τ
+  nm : ∀ {G Γ τ} → Tm G τ → Env G Γ → Nm Γ τ
   nm t g = quo _ (ev t g)
 
-  ⟦_⟧≅_ : ∀ {σ} → Tm ε σ → Nm ε σ → Set
-  ⟦ t ⟧≅ nt = nm {ε} {ε} (t) ε ≅ nt
+  nm₀ : ∀ {τ} → Tm ε τ → Nm ε τ
+  nm₀ x = nm x ε
+
+  -- Terms in normal form may be embedded back into the original term language.
+  mutual
+    emb-ne : ∀ {Γ σ} → Ne Γ σ → Tm Γ σ
+    emb-ne (var x) = var x
+    emb-ne (f ∙ x) = emb-ne f ∙ ⌈ x ⌉
+    emb-ne (` x) = ` x
+
+    ⌈_⌉ : ∀ {Γ σ} → Nm Γ σ → Tm Γ σ
+    ⌈ ↑ x ⌉ = emb-ne x
+    ⌈ ƛ x ⌉ = ƛ ⌈ x ⌉
+  
+  ⟦_⟧≅_ : ∀ {σ} → Tm ε σ → Tm ε σ → Set
+  ⟦ t ⟧≅ nt = ⌈ nm₀ t ⌉ ≅ nt
 
   mutual
     closed-ne : ∀ {Γ σ} → Ne Γ σ → Maybe (CTm σ)
@@ -192,3 +208,4 @@ module Lambda (Axiom : Ty → Set) where
 
   closed' : ∀ {σ} {c : CTm σ} (x : Nm ε σ) {p : closed x ≅ just c} → CTm σ
   closed' {c = c} _ = c
+
