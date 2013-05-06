@@ -1,7 +1,9 @@
 open import Calculus
 
 module Syntax (T : Set) (L : Ty T → Set) where
-open Lambda T L
+
+module SynCalculus = Lambda T L
+open SynCalculus
 
 infixl 8 _>_ _<_ _⊙>_ _<⊙_
 data DTm : Ty T → Set where
@@ -17,3 +19,4 @@ stage1 (f > x) = stage1 f ∙ stage1 x
 stage1 (x < f) = stage1 f ∙ stage1 x
 stage1 (f ⊙> g) = ƛ (stage1 f ∙ (stage1 g ∙ (var vz)))
 stage1 (g <⊙ f) = ƛ (stage1 f ∙ (stage1 g ∙ (var vz)))
+

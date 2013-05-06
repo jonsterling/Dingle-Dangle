@@ -13,4 +13,5 @@ data Axiom (W : Ty Kinds → Set) : Ty Kinds → Set where
 pred : Ty Kinds
 pred = ⟨ E ⟩ ⇒ ⟨ T ⟩
 
+module SemCalculus W = Lambda Kinds (Axiom W)
 

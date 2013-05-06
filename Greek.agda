@@ -21,12 +21,10 @@ data Sem : Ty Kinds → Set where
   ⟦παρθένον⟧  : Sem pred
   ⟦οἶσθα⟧     : Sem pred
 
+module SemCalculus' = SemCalculus Sem
+
 module SemInterp where
   open Lambda
-
-  SAxiom = Semantics.Axiom Sem
-  LTm = Lambda.Tm Kinds SAxiom
-  SCTm = Lambda.CTm Cat Lex
 
   ⟦_⟧sty : Ty Cat → Ty Kinds
   ⟦ ⟨ N ⟩ ⟧sty = pred
@@ -35,7 +33,7 @@ module SemInterp where
   ⟦ ⟨ P ⟩ ⟧sty = pred
   ⟦ σ ⇒ τ ⟧sty = ⟦ σ ⟧sty ⇒ ⟦ τ ⟧sty
 
-  ⟦_⟧ : ∀ {σ} → SCTm σ → LTm ε ⟦ σ ⟧sty
+  ⟦_⟧ : ∀ {σ} → SynCalculus.CTm σ → SemCalculus'.Tm ε ⟦ σ ⟧sty
   ⟦ ` τὴν ⟧ = ` ι
   ⟦ ` εὐρυτείαν ⟧ = ƛ (ƛ (` ∧ ∙ (var (vs vz) ∙ var vz) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var vz)))
   ⟦ ` παρθένον ⟧ = ` w ⟦παρθένον⟧
@@ -49,7 +47,7 @@ module Examples where
 
 
   module TestSyntax where
-    open Lambda Cat Lex
+    open SynCalculus
 
     test-syntax : ⟦ stage1 sentence ⟧≅ ↑ (` δῆτα ∙ ↑ (` οἶσθα ∙ ↑ (` τὴν ∙ ↑ (` εὐρυτείαν ∙ ↑ ` παρθένον))))
     test-syntax = refl
@@ -59,7 +57,8 @@ module Examples where
 
   module TestSemantics where
     open SemInterp
-    open Lambda Kinds (Semantics.Axiom Sem)
+    open SemCalculus'
+    
     open TestSyntax using (ex-closed-form)
 
     test-semantics : ⟦ ⟦ ex-closed-form ⟧ ⟧≅ ↑ (` w ⟦οἶσθα⟧ ∙ ↑ (` ι ∙ ƛ (↑ (` ∧ ∙ ↑ (` w ⟦παρθένον⟧ ∙ ↑ (var vz)) ∙ ↑ (` w ⟦εὐρυτείαν⟧ ∙ ↑ (var vz))))))
