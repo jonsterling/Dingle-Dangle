@@ -195,16 +195,13 @@ module Lambda (Axiom : Ty → Set) where
 
   mutual
     closed-ne : ∀ {Γ σ} → Ne Γ σ → Maybe (CTm σ)
-    closed-ne (var x) = nothing
-    closed-ne (f ∙ x) with closed-ne f | closed x
-    closed-ne (f ∙ x) | just cf | just cx = just (cf ∙ cx)
-    closed-ne (f ∙ x) | just x₁ | nothing = nothing
-    closed-ne (f ∙ x) | nothing | cx = nothing
-    closed-ne (` x) = just (` x)
+    closed-ne (f ∙ x) = _∙_ <$> closed-ne f ⊛ closed x
+    closed-ne (` x)   = just (` x)
+    closed-ne _       = nothing
 
     closed : ∀ {Γ σ} → Nm Γ σ → Maybe (CTm σ)
     closed (↑ x) = closed-ne x
-    closed (ƛ x) = nothing
+    closed _     = nothing
 
   closed' : ∀ {σ} {c : CTm σ} (x : Nm ε σ) {p : closed x ≅ just c} → CTm σ
   closed' {c = c} _ = c
