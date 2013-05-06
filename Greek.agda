@@ -2,7 +2,7 @@ module Greek where
 
 open import Calculus
 open import Semantics
-open import Equality
+open import Kit.Equality
 
 data Cat : Set where
   N D V P : Cat
