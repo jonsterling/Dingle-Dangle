@@ -1,11 +1,11 @@
 module Calculus (T : Set) where
 
-open import Equality
-open import Utility
-open import Empty
-open import Unit
-open import Either
-open import Maybe
+open import Kit.Equality
+open import Kit.Utility
+open import Kit.Empty
+open import Kit.Unit
+open import Kit.Either
+open import Kit.Maybe
 import Contexts
 
 infixr 8 _⇒_

@@ -1,4 +1,4 @@
-module Utility where
+module Kit.Utility where
 
 _∘_ : {A : Set}{B : A → Set}{C : (a : A) → B a → Set} →
      (∀ {a} b → C a b) → (g : (∀ (a : A) → B a)) → ∀ (a : A) → C a (g a)

@@ -1,4 +1,4 @@
-module Maybe where
+module Kit.Maybe where
 
 data Maybe (A : Set) : Set where
   just    : A → Maybe A

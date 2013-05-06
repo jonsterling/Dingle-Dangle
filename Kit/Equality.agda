@@ -1,4 +1,4 @@
-module Equality where
+module Kit.Equality where
 
 data _≅_ {A : Set} : {A' : Set} → A → A' → Set where
   refl : {a : A} → a ≅ a
