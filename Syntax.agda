@@ -18,15 +18,29 @@ module Types (T : Set) where
   open Contexts Ty public
 
 module Calculus (T : Set) (L : Types.Ty T → Set) where
-  open Types T public
+  open Types T
+  infixl 8 _∙_ _>_ _<_ _⊙>_ _<⊙_
 
-  infixl 8 _∙_
-  data Tm (Γ : Con) : Ty → Set where
-   `_ : ∀ {σ} → L σ → Tm Γ σ
-   var : ∀ {σ} → Var Γ σ → Tm Γ σ
-   _∙_ : ∀ {σ τ} → Tm Γ (σ ⇒ τ) → Tm Γ σ → Tm Γ τ
-   ƛ   : ∀ {σ τ} → Tm (Γ < σ) τ → Tm Γ (σ ⇒ τ)
+  data DTm : Ty → Set where
+    `_   : ∀ {σ} → L σ → DTm σ
+    _>_  : ∀ {σ τ} → DTm (σ ⇒ τ) → DTm σ → DTm τ
+    _<_  : ∀ {σ τ} → DTm σ → DTm (σ ⇒ τ) → DTm τ
+    _⊙>_ : ∀ {ρ σ τ} → DTm (σ ⇒ τ) → DTm (ρ ⇒ σ) → DTm (ρ ⇒ τ)
+    _<⊙_ : ∀ {ρ σ τ} → DTm (ρ ⇒ σ) → DTm (σ ⇒ τ) → DTm (ρ ⇒ τ)
   
+  data Tm (Γ : Con) : Ty → Set where
+    `_  : ∀ {σ} → L σ → Tm Γ σ
+    var : ∀ {σ} → Var Γ σ → Tm Γ σ
+    _∙_ : ∀ {σ τ} → Tm Γ (σ ⇒ τ) → Tm Γ σ → Tm Γ τ
+    ƛ   : ∀ {σ τ} → Tm (Γ < σ) τ → Tm Γ (σ ⇒ τ)
+  
+  stage1 : ∀ {Γ σ} → DTm σ → Tm Γ σ
+  stage1 (` x) = ` x
+  stage1 (f > x) = stage1 f ∙ stage1 x
+  stage1 (x < f) = stage1 f ∙ stage1 x
+  stage1 (f ⊙> g) = ƛ (stage1 f ∙ (stage1 g ∙ (var vz)))
+  stage1 (g <⊙ f) = ƛ (stage1 f ∙ (stage1 g ∙ (var vz)))
+
   -- Substitutions
   
   Sub : Con → Con → Set
@@ -173,25 +187,36 @@ module Calculus (T : Set) (L : Types.Ty T → Set) where
   nm : forall {G Γ τ} → Tm G τ → Env G Γ → Nm Γ τ
   nm t g = quo _ (ev t g)
   
-  ⊙ : ∀ {a b c} → Tm ε ((b ⇒ c) ⇒ (a ⇒ b) ⇒ (a ⇒ c))
-  ⊙ = λ {a} {b} {c} → ƛ (ƛ (ƛ ((var (vs (vs vz))) ∙ ((var (vs vz)) ∙ (var vz)))))
-  
-  ⟦_⟧≅_ : ∀ {σ} → Tm ε σ → Nm ε σ → Set
-  ⟦ t ⟧≅ nt = nm {ε} {ε} t ε ≅ nt
+  ⟦_⟧≅_ : ∀ {σ} → DTm σ → Nm ε σ → Set
+  ⟦ t ⟧≅ nt = nm {ε} {ε} (stage1 t) ε ≅ nt
 
 
-data Cat : Set where
-  N D V : Cat 
+module Greek where
+  data Cat : Set where
+    N D V P : Cat 
 
-open Types Cat
-data Lex : Ty → Set where
-  the    : Lex (⟨ N ⟩ ⇒ ⟨ D ⟩)
-  happy  : Lex (⟨ N ⟩ ⇒ ⟨ N ⟩)
-  dog    : Lex ⟨ N ⟩
-  sleeps : Lex (⟨ D ⟩ ⇒ ⟨ V ⟩)
+  open Types Cat
 
-open Calculus Cat Lex
+  data Lex : Ty → Set where
+    τὴν        : Lex (⟨ N ⟩ ⇒ ⟨ D ⟩)
+    εὐρυτείαν  : Lex (⟨ N ⟩ ⇒ ⟨ N ⟩)
+    παρθένον   : Lex ⟨ N ⟩
+    οἶσθα      : Lex (⟨ D ⟩ ⇒ ⟨ V ⟩)
+    δῆτα       : Lex (⟨ V ⟩ ⇒ ⟨ V ⟩)
 
--- test normalization of syntax tree
-test : ⟦ (⊙ ∙ ` the ∙ ` happy) ∙ ` dog ⟧≅ ↑ (` the ∙ ↑ (` happy ∙ ↑ ` dog))
-test = refl
+    ἥκομεν     : Lex (⟨ P ⟩ ⇒ ⟨ V ⟩)
+    εἰς        : Lex (⟨ D ⟩ ⇒ ⟨ P ⟩)
+    τοσοῦτον   : Lex (⟨ N ⟩ ⇒ ⟨ D ⟩)
+    ἀμαθίας    : Lex ⟨ N ⟩
+
+  open Calculus Cat Lex
+
+  test1 : ⟦ ` τὴν ⊙> ` εὐρυτείαν <⊙ ` οἶσθα <⊙ ` δῆτα > ` παρθένον ⟧≅
+           ↑ (` δῆτα ∙ ↑ (` οἶσθα ∙ ↑ (` τὴν ∙ ↑ (` εὐρυτείαν ∙ ↑ ` παρθένον))))
+  test1 = refl
+
+  test2 : ⟦ ` εἰς ⊙> ` τοσοῦτον <⊙ ` ἥκομεν > ` ἀμαθίας ⟧≅
+           ↑ (` ἥκομεν ∙ ↑ (` εἰς ∙ ↑ (` τοσοῦτον ∙ ↑ ` ἀμαθίας)))
+  test2 = refl
+
+open Greek public
