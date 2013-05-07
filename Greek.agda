@@ -4,44 +4,53 @@ open import Calculus
 open import Semantics
 open import Kit.Equality
 
-data Cat : Set where
-  N D V P : Cat
 
-data Lex : Ty Cat → Set where
-  τὴν        : Lex (⟨ N ⟩ ⇒ ⟨ D ⟩)
-  εὐρυτείαν  : Lex (⟨ N ⟩ ⇒ ⟨ N ⟩)
-  παρθένον   : Lex ⟨ N ⟩
-  οἶσθα      : Lex (⟨ D ⟩ ⇒ ⟨ V ⟩)
-  δῆτα       : Lex (⟨ V ⟩ ⇒ ⟨ V ⟩)
+module GreekGrammar where
+  open Semantics
+  open import Grammar public
 
-open import Syntax Cat Lex
+  open Lambda using (ƛ; _∙_; var; `_)
+  
+  data Cat : Set where
+    N D V P : Cat
+  
+  data Lex : Ty Cat → Set where
+    τὴν        : Lex (⟨ N ⟩ ⇒ ⟨ D ⟩)
+    εὐρυτείαν  : Lex (⟨ N ⟩ ⇒ ⟨ N ⟩)
+    παρθένον   : Lex ⟨ N ⟩
+    οἶσθα      : Lex (⟨ D ⟩ ⇒ ⟨ V ⟩)
+    δῆτα       : Lex (⟨ V ⟩ ⇒ ⟨ V ⟩)
+  
+  open import Syntax Cat Lex public
+  
+  data Sem : Ty Kinds → Set where
+    ⟦εὐρυτείαν⟧ : Sem pred
+    ⟦παρθένον⟧  : Sem pred
+    ⟦οἶσθα⟧     : Sem pred
+  ⟦_⟧c : Cat → Ty Kinds
+  ⟦ N ⟧c = pred
+  ⟦ D ⟧c = ⟨ E ⟩
+  ⟦ V ⟧c = ⟨ T ⟩
+  ⟦ P ⟧c = pred
 
-data Sem : Ty Kinds → Set where
-  ⟦εὐρυτείαν⟧ : Sem pred
-  ⟦παρθένον⟧  : Sem pred
-  ⟦οἶσθα⟧     : Sem pred
+  ⟦_⟧l : ∀ {σ} → Lex σ → SemCalculus.Tm Sem ε (denote ⟦_⟧c σ)
+  ⟦ τὴν       ⟧l = ` ι
+  ⟦ εὐρυτείαν ⟧l = ƛ (ƛ (` ∧ ∙ (var (vs vz) ∙ var vz) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var vz)))
+  ⟦ παρθένον  ⟧l = ` w ⟦παρθένον⟧
+  ⟦ οἶσθα     ⟧l = ` w ⟦οἶσθα⟧
+  ⟦ δῆτα      ⟧l = ƛ (var vz)
+  
+  greek : Grammar
+  greek = record {
+            Categories = Cat;
+            Lexicon = Lex;
+            Semantics = Sem;
+            ⟦_⟧-cat = ⟦_⟧c;
+            ⟦_⟧-lex = ⟦_⟧l }
 
-module SemCalculus' = SemCalculus Sem
-
-module SemInterp where
-  open Lambda
-
-  ⟦_⟧sty : Ty Cat → Ty Kinds
-  ⟦ ⟨ N ⟩ ⟧sty = pred
-  ⟦ ⟨ D ⟩ ⟧sty = ⟨ E  ⟩
-  ⟦ ⟨ V ⟩ ⟧sty = ⟨ T ⟩
-  ⟦ ⟨ P ⟩ ⟧sty = pred
-  ⟦ σ ⇒ τ ⟧sty = ⟦ σ ⟧sty ⇒ ⟦ τ ⟧sty
-
-  ⟦_⟧ : ∀ {σ} → SynCalculus.CTm σ → SemCalculus'.Tm ε ⟦ σ ⟧sty
-  ⟦ ` τὴν ⟧ = ` ι
-  ⟦ ` εὐρυτείαν ⟧ = ƛ (ƛ (` ∧ ∙ (var (vs vz) ∙ var vz) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var vz)))
-  ⟦ ` παρθένον ⟧ = ` w ⟦παρθένον⟧
-  ⟦ ` οἶσθα ⟧ = ` w ⟦οἶσθα⟧
-  ⟦ ` δῆτα ⟧ = ƛ (var vz)
-  ⟦ f ∙ x ⟧ = ⟦ f ⟧ ∙ ⟦ x ⟧
-
+  
 module Examples where
+  open GreekGrammar
   -- For the sentence
   --
   --     τὴν εὐρυτείαν οἶσθα δῆτα παρθένον
@@ -51,7 +60,7 @@ module Examples where
 
 
   module TestSyntax where
-    open SynCalculus
+    open GreekGrammar.SynCalculus
 
     -- We can normalize our syntactic representation into the following form which favors
     -- locality of logical relations:
@@ -65,9 +74,7 @@ module Examples where
     ex-closed-form = closed' (nm (stage1 sentence) ε)
 
   module TestSemantics where
-    open SemInterp
-    open SemCalculus'
-    
+    open SemCalculus Sem
     open TestSyntax using (ex-closed-form)
 
     -- We can interpret the syntactic representation into Logical Form:
