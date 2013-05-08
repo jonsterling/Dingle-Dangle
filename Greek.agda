@@ -67,11 +67,11 @@ module Examples where
     --
     --     δῆτα [ οἶσθα [ τὴν [ εὐρυτείαν [ παρθένον ] ] ] ]
     --
-    test-syntax : ⟦ stage1 sentence ⟧≅ (` δῆτα ∙ (` οἶσθα ∙ (` τὴν ∙ (` εὐρυτείαν ∙ ` παρθένον))))
+    test-syntax : ⟦ interpret sentence ⟧≅ (` δῆτα ∙ (` οἶσθα ∙ (` τὴν ∙ (` εὐρυτείαν ∙ ` παρθένον))))
     test-syntax = refl
 
     ex-closed-form : Closed ⟨ V ⟩
-    ex-closed-form = closed (nm (stage1 sentence) ε)
+    ex-closed-form = closed (nm (interpret sentence) ε)
 
   module TestSemantics where
     open SemCalculus Sem
