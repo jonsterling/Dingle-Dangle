@@ -70,8 +70,8 @@ module Examples where
     test-syntax : ⟦ stage1 sentence ⟧≅ (` δῆτα ∙ (` οἶσθα ∙ (` τὴν ∙ (` εὐρυτείαν ∙ ` παρθένον))))
     test-syntax = refl
 
-    ex-closed-form : CTm ⟨ V ⟩
-    ex-closed-form = closed' (nm (stage1 sentence) ε)
+    ex-closed-form : Closed ⟨ V ⟩
+    ex-closed-form = closed (nm (stage1 sentence) ε)
 
   module TestSemantics where
     open SemCalculus Sem

@@ -23,6 +23,6 @@ open Lambda
 ⟦_⟧* : ∀ {{g : Grammar}} → Ty Categories → Ty Kinds
 ⟦_⟧* = denote ⟦_⟧-cat
 
-⟦_⟧ : ∀ {{g : Grammar}} {σ} → SynCalculus.CTm Categories Lexicon σ → SemCalculus.Tm Semantics ε ⟦ σ ⟧*
+⟦_⟧ : ∀ {{g : Grammar}} {σ} → SynCalculus.Closed Categories Lexicon σ → SemCalculus.Tm Semantics ε ⟦ σ ⟧*
 ⟦_⟧ {{g}} (` x) = ⟦ x ⟧-lex
 ⟦_⟧ {{g}} (f ∙ x) = ⟦ f ⟧ ∙ ⟦ x ⟧

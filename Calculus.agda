@@ -3,9 +3,10 @@ module Calculus (T : Set) where
 open import Kit.Equality
 open import Kit.Utility
 open import Kit.Empty
-open import Kit.Unit
 open import Kit.Either
 open import Kit.Maybe
+open import Kit.Bool
+
 import Contexts
 
 infixr 8 _⇒_
@@ -25,10 +26,6 @@ module Lambda (Axiom : Ty → Set) where
     _∙_ : ∀ {σ τ} → Tm Γ (σ ⇒ τ) → Tm Γ σ → Tm Γ τ
     ƛ   : ∀ {σ τ} → Tm (Γ < σ) τ → Tm Γ (σ ⇒ τ)
 
-  -- Closed terms do not have variables or abstractions.
-  data CTm : Ty → Set where
-    `_ : ∀ {σ} → Axiom σ → CTm σ
-    _∙_ : ∀ {σ τ} → CTm (σ ⇒ τ) → CTm σ → CTm τ
 
   -- Substitutions
 
@@ -122,16 +119,16 @@ module Lambda (Axiom : Ty → Set) where
   lift f K x | inj₁ τ∈K = var (τ∈K _)
   lift f K x | inj₂ τ∈Γ = ren (Con-Ren K) ε (f _ τ∈Γ)
 
-  -- NbE inspired by http://personal.cis.strath.ac.uk/~conor/fooling/Nobby2.agda but typed
-  mutual
-    data Nm (Γ : Con) : Ty → Set where
-      ↑_ : ∀ {τ} → Ne Γ τ → Nm Γ τ
-      ƛ  : ∀ {σ τ} → Nm (Γ < σ) τ → Nm Γ (σ ⇒ τ)
+  data Nm (Γ : Con) : Ty → Bool → Set where
+    ↑_  : ∀ {τ} → Nm Γ τ false → Nm Γ τ true
+    ƛ   : ∀ {σ τ} → Nm (Γ < σ) τ true → Nm Γ (σ ⇒ τ) true
+    var : ∀{σ} → Var Γ σ → Nm Γ σ false
+    _∙_ : ∀{σ τ} → Nm Γ (σ ⇒ τ) false → Nm Γ σ true → Nm Γ τ false
+    `_  : ∀{σ} → Axiom σ → Nm Γ σ false
 
-    data Ne : Con → Ty → Set where
-      var : ∀{Γ σ} → Var Γ σ → Ne Γ σ
-      _∙_ : ∀{Γ σ τ} → Ne Γ (σ ⇒ τ) → Nm Γ σ → Ne Γ τ
-      `_ : ∀{Γ σ} → Axiom σ → Ne Γ σ
+  Ne Nf : Con → Ty → Set
+  Nf Γ σ = Nm Γ σ true
+  Ne Γ σ = Nm Γ σ false
   
   mutual
     [_] : Ty → Con → Set
@@ -146,7 +143,7 @@ module Lambda (Axiom : Ty → Set) where
   ren[] le (inr y) = inr (λ le' → y (renComp le' le))
 
   mutual
-    quo : ∀ {Γ} (τ : Ty) → [ τ ] Γ → Nm Γ τ
+    quo : ∀ {Γ} (τ : Ty) → [ τ ] Γ → Nf Γ τ
     quo ⟨ t ⟩ (inr x) = ⊥-elim (x renId)
     quo ⟨ t ⟩ (inl e) = ↑ (e renId)
     quo (S ⇒ T) f = ƛ (quo T (ren[] (Con-Ren (ε < _)) f $$ (inl (λ le → var (le ε vz)))))
@@ -173,36 +170,36 @@ module Lambda (Axiom : Ty → Set) where
   ev (f ∙ s) g = ev f g $$ ev s g
   ev (ƛ t) g = inr λ le s → ev t (renEnv le g < s)
 
-  nm : ∀ {G Γ τ} → Tm G τ → Env G Γ → Nm Γ τ
+  nm : ∀ {G Γ τ} → Tm G τ → Env G Γ → Nf Γ τ
   nm t g = quo _ (ev t g)
 
-  nm₀ : ∀ {τ} → Tm ε τ → Nm ε τ
+  nm₀ : ∀ {τ} → Tm ε τ → Nf ε τ
   nm₀ x = nm x ε
 
   -- Terms in normal form may be embedded back into the original term language.
   mutual
-    emb-ne : ∀ {Γ σ} → Ne Γ σ → Tm Γ σ
-    emb-ne (var x) = var x
-    emb-ne (f ∙ x) = emb-ne f ∙ ⌈ x ⌉
-    emb-ne (` x) = ` x
-
-    ⌈_⌉ : ∀ {Γ σ} → Nm Γ σ → Tm Γ σ
-    ⌈ ↑ x ⌉ = emb-ne x
+    ⌈_⌉ : ∀ {Γ σ b} → Nm Γ σ b → Tm Γ σ
+    ⌈ ↑ x ⌉ = ⌈ x ⌉
     ⌈ ƛ x ⌉ = ƛ ⌈ x ⌉
+    ⌈ var x ⌉ = var x
+    ⌈ f ∙ x ⌉ = ⌈ f ⌉ ∙ ⌈ x ⌉
+    ⌈ ` x ⌉ = ` x
   
   ⟦_⟧≅_ : ∀ {σ} → Tm ε σ → Tm ε σ → Set
   ⟦ t ⟧≅ nt = ⌈ nm₀ t ⌉ ≅ nt
 
-  mutual
-    closed-ne : ∀ {Γ σ} → Ne Γ σ → Maybe (CTm σ)
-    closed-ne (f ∙ x) = _∙_ <$> closed-ne f ⊛ closed x
-    closed-ne (` x)   = just (` x)
-    closed-ne _       = nothing
+  -- Closed terms do not have variables or abstractions.
+  data Closed : Ty → Set where
+    `_ : ∀ {σ} → Axiom σ → Closed σ
+    _∙_ : ∀ {σ τ} → Closed (σ ⇒ τ) → Closed σ → Closed τ
 
-    closed : ∀ {Γ σ} → Nm Γ σ → Maybe (CTm σ)
-    closed (↑ x) = closed-ne x
-    closed _     = nothing
+  closed? : ∀ {Γ σ b} → Nm Γ σ b → Maybe (Closed σ)
+  closed? (↑ x) = closed? x
+  closed? (ƛ x) = nothing
+  closed? (var x) = nothing
+  closed? (f ∙ x) = _∙_ <$> closed? f ⊛ closed? x
+  closed? (` x) = just (` x)
 
-  closed' : ∀ {σ} {c : CTm σ} (x : Nm ε σ) {p : closed x ≅ just c} → CTm σ
-  closed' {c = c} _ = c
+  closed : ∀ {σ} {c : Closed σ} (x : Nf ε σ) {p : closed? x ≅ just c} → Closed σ
+  closed {c = c} _ = c
 
