@@ -4,11 +4,11 @@ module Syntax
 -- a simple type system.
 using (Cat : Type) {
 
+  infixr 70 ~>
+
   data Ty : Type where
     C : Cat -> Ty
-    Fun : Ty -> Ty-> Ty
-
-  syntax [s] "~>" [t] = Fun s t
+    (~>) : Ty -> Ty-> Ty
 
   implicit catToTy : Cat -> Ty
   catToTy = C
