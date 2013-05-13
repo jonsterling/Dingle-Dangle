@@ -24,14 +24,14 @@ using (Cat : Type) {
       (<.)  : Expr (r ~> s) -> Expr (s ~> t) -> Expr (r ~> t)
 
     implicit lexToExpr : Lex s -> Expr s
-    lexToExpr {s} l = L l
+    lexToExpr l = L l
 
 
     -- We use a classy little hack to get the metalanguage to evaluate
     -- our expressions for us. First we reflect our types into the
     -- metalanguage; then, we write a quick little evaluator. Both lexical
-    -- and syntactic categories are "axioms", and should not evaluate any
-    -- further. To make this happen, we can just fail to provide
+    -- entries and syntactic categories are "axioms", and should not evaluate
+    -- any further. To make this happen, we can just fail to provide
     -- implementations for the embedding functions |C'| and |L'|.
 
     C' : Cat -> Type
