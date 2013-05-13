@@ -1,26 +1,37 @@
 module Syntax
 
+-- Given a set of syntactic categories, we can construct
+-- a simple type system.
 using (Cat : Type) {
+
   data Ty : Type where
     C : Cat -> Ty
     Fun : Ty -> Ty-> Ty
 
   syntax [s] "~>" [t] = Fun s t
 
+  implicit catToTy : Cat -> Ty
+  catToTy = C
+
+  -- Given a lexicon, we can construct a syntax.
   using (Lex : Ty -> Type) {
-    implicit catToTy : Cat -> Ty
-    catToTy = C
 
     infixl 70 |>
     infixl 70 <|
     infixl 70 <.
     infixl 70 .>
 
+    -- A small categorial syntax.
     data Expr : Ty -> Type where
+      -- lexical entries are axioms in our system
       L     : Lex t -> Expr t
+      -- right application: f |> x
       (|>)  : Expr (s ~> t) -> Expr s -> Expr t
+      -- left application: x <| f
       (<|)  : Expr s -> Expr (s ~> t) -> Expr t
+      -- right composition: f .> g
       (.>)  : Expr (s ~> t) -> Expr (r ~> s) -> Expr (r ~> t)
+      -- left composition: g <. f
       (<.)  : Expr (r ~> s) -> Expr (s ~> t) -> Expr (r ~> t)
 
     implicit lexToExpr : Lex s -> Expr s
