@@ -12,5 +12,8 @@ data Lex : Ty -> Type where
 sentence : Expr (C V)
 sentence = εἰς .> τοσοῦτον <. ἥκομεν |> ἐλευθερίας
 
-testeval : (| sentence |) = L' ἥκομεν (L' εἰς (L' τοσοῦτον (L' ἐλευθερίας)))
-testeval = refl
+result : Tm (C V)
+result = L' ἥκομεν <$> (L' εἰς <$> (L' τοσοῦτον <$> (L' ἐλευθερίας)))
+
+test : eval sentence = result
+test = refl

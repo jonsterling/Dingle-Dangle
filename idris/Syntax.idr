@@ -34,33 +34,55 @@ using (Cat : Type) {
       -- left composition: g <. f
       (<.)  : Expr (r ~> s) -> Expr (s ~> t) -> Expr (r ~> t)
 
-    implicit lexToExpr : Lex s -> Expr s
-    lexToExpr l = L l
+
+    data Term : (Ty -> Type) -> Ty -> Type where
+      L'    : Lex t -> Term v t
+      Var   : {v : Ty -> Type} -> v t -> Term v t
+      Lam   : {v : Ty -> Type} -> (v s -> Term v t) -> Term v (s ~> t)
+      (<$>) : Term v (s ~> t) -> Term v s -> Term v t
+
+    data Norm : (Ty -> Type) -> Ty -> Type where
+      NZ : {v : Ty -> Type} -> v t -> Norm v t
+      NS : {v : Ty -> Type} -> Term (Norm v) t -> Norm v t
 
 
-    -- We use a classy little hack to get the metalanguage to evaluate
-    -- our expressions for us. First we reflect our types into the
-    -- metalanguage; then, we write a quick little evaluator. Both lexical
-    -- entries and syntactic categories are "axioms", and should not evaluate
-    -- any further. To make this happen, we can just fail to provide
-    -- implementations for the embedding functions |C'| and |L'|.
+    norm : Term (Norm v) t -> Term (Norm v) t
+    norm (L' l) = L' l
+    norm (Var (NZ v)) = Var (NZ v)
+    norm (Var (NS t)) = norm t
+    norm (f <$> x)    =
+      case norm f of
+        Var (NS f') => norm (f' <$> x)
+        Lam e       => norm (e (NS x))
+        f'          => f' <$> norm x
+    norm (Lam e)      = Lam (\v => norm (e v))
 
-    C' : Cat -> Type
+    cut : Term (Norm v) t -> Term v t
+    cut (L' l) = L' l
+    cut (Var (NZ v)) = Var v
+    cut (Var (NS t)) = cut t
+    cut (f <$> x)    = (cut f) <$> (cut x)
+    cut (Lam e)      = Lam (\v => cut (e (NZ v)))
 
-    denote : Ty -> Type
-    denote (C c) = C' c
-    denote (s ~> t) = denote s -> denote t
+    convert : Expr t -> Term v t
+    convert (L x) = L' x
+    convert (f |> x) = convert f <$> convert x
+    convert (x <| f) = convert f <$> convert x
+    convert (f .> g) = Lam (\v => convert f <$> (convert g <$> (Var v)))
+    convert (g <. f) = Lam (\v => convert f <$> (convert g <$> (Var v)))
 
-    implicit L' : Lex s -> denote s
+    normalize : ((v : Ty -> Type) -> Term v t) -> Term v t
+    normalize t = (cut (norm (t _)))
 
-    eval : Expr s -> denote s
-    eval (L x)    = L' x
-    eval (f |> x) = (eval f) (eval x)
-    eval (x <| f) = (eval f) (eval x)
-    eval (f .> g) = \x => (eval f) ((eval g) x)
-    eval (g <. f) = \x => (eval f) ((eval g) x)
+    Tm : Ty -> Type
+    Tm = Term (const ())
 
-    syntax "(|" [e] "|)" = eval e
+    eval : Expr t -> Tm t
+    eval e = normalize (\_ => convert e)
+
+    implicit lexToExpr : Lex t -> Expr t
+    lexToExpr = L
   }
 }
+
 
