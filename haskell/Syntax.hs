@@ -1,8 +1,8 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
@@ -74,7 +74,6 @@ instance Show (Expr Lex t) where
   show (f :.> g) = show f ++ " .> " ++ show g
   show (f :<. g) = show f ++ " <. " ++ show g
 
-
 instance Show (Term Lex v t) where
   show (Lex l)  = show l
   show (f :@ x) = show f ++ " :@ " ++ show x
@@ -91,8 +90,17 @@ conv (g :<. f) = Lam (\x -> (conv f) :@ (conv g :@ Var x))
 eval :: Expr lex t -> Term lex v t
 eval t = normalize $ conv t
 
-ex :: Expr Lex (C V)
-ex = L Eis :.> L Tosouton :<. L Hkomen :|> L Eleutherias
+class Merge (s :: Ty cat) (t :: Ty cat) (r :: Ty cat) | s t -> r where
+  (<>) :: Expr lex s -> Expr lex t -> Expr lex r
+instance Merge (C x :~> y) (C x) y where
+  (<>) = (:|>)
+instance Merge (C x) (C x :~> y) y where
+  (<>) = (:<|)
+instance Merge (x :~> y) (y :~> z) (x :~> z) where
+  (<>) = (:<.)
+instance Merge (y :~> z) (x :~> y) (x :~> z) where
+  (<>) = (:.>)
 
-ex' = eval ex
+explicit  = L Eis :.> L Tosouton :<. L Hkomen :|> L Eleutherias
+inferred  = L Eis <> L Tosouton <> L Hkomen <> L Eleutherias
 
