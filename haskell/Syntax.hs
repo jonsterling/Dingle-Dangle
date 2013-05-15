@@ -12,8 +12,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE OverlappingInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Syntax where
+
+import GHC.TypeLits
+import TypeCast
 
 infixr :~>
 data Ty cat :: * where
@@ -65,6 +70,27 @@ data Lex :: Ty Cat -> * where
   Tosouton    :: Lex (C N :~> C D)
   Eleutherias :: Lex (C N)
   Hkomen      :: Lex (C P :~> C V)
+  Thn         :: Lex (C N :~> C D)
+  Euryteian   :: Lex (C N :~> C N)
+  Oistha      :: Lex (C D :~> C V)
+  Dhta        :: Lex (C V :~> C V)
+  Parthenon   :: Lex (C N)
+  Pedas       :: Lex (C N)
+  DNull       :: Lex (C N :~> C D)
+  Ebale       :: Lex (C D :~> C V)
+  Xryseias    :: Lex (C N :~> C N)
+  Ekeinon     :: Lex (C D :~> C D)
+  Eidon       :: Lex (C D :~> C V)
+  Ton         :: Lex (C N :~> C D)
+  Andra       :: Lex (C N)
+  Naumaxia    :: Lex (C N)
+  Gignetai    :: Lex (C D :~> C V)
+  Ep'         :: Lex (C D :~> C P)
+  APPL        :: Lex (C P :~> C V :~> C V)
+  Aiginhi     :: Lex (C N)
+  Megalh      :: Lex (C N :~> C N)
+
+
 deriving instance Show (Lex t)
 
 instance Show (Expr Lex t) where
@@ -90,17 +116,42 @@ conv (g :<. f) = Lam (\x -> (conv f) :@ (conv g :@ Var x))
 eval :: Expr lex t -> Term lex v t
 eval t = normalize $ conv t
 
-class Merge (s :: Ty cat) (t :: Ty cat) (r :: Ty cat) | s t -> r where
-  (<>) :: Expr lex s -> Expr lex t -> Expr lex r
-instance Merge (C x :~> y) (C x) y where
-  (<>) = (:|>)
-instance Merge (C x) (C x :~> y) y where
-  (<>) = (:<|)
-instance Merge (x :~> y) (y :~> z) (x :~> z) where
-  (<>) = (:<.)
-instance Merge (y :~> z) (x :~> y) (x :~> z) where
-  (<>) = (:.>)
+class Merge s t (r :: *) | s t -> r where
+  (<>) :: s -> t -> r
 
-explicit  = L Eis :.> L Tosouton :<. L Hkomen :|> L Eleutherias
-inferred  = L Eis <> L Tosouton <> L Hkomen <> L Eleutherias
+data Empty
+class Merge' (flag :: Bool) s t r | flag s t -> r where
+  merge' :: Sing flag -> s -> t -> r
 
+data instance Sing (a :: Bool) where
+  SFalse :: Sing False
+  STrue :: Sing True
+instance SingI True where sing = STrue
+instance SingI False where sing = SFalse
+
+class MergePred a b (flag :: Bool) | a b -> flag
+instance TypeCast flag False => MergePred a b flag
+instance MergePred (Expr lex (C x :~> y)) (Expr lex (C x)) True
+instance MergePred (Expr lex (C x)) (Expr lex (C x :~> y)) True
+instance MergePred (Expr lex (x :~> y)) (Expr lex (y :~> z)) True
+instance MergePred (Expr lex (y :~> z)) (Expr lex (x :~> y)) True
+
+instance Merge' True (Expr lex (C x :~> y)) (Expr lex (C x)) (Expr lex y) where
+  merge' _ = (:|>)
+instance Merge' True (Expr lex (C x)) (Expr lex (C x :~> y)) (Expr lex y) where
+  merge' _ = (:<|)
+instance Merge' True (Expr lex (x :~> y)) (Expr lex (y :~> z)) (Expr lex (x :~> z)) where
+  merge' _ = (:<.)
+instance Merge' True (Expr lex (y :~> z)) (Expr lex (x :~> y)) (Expr lex (x :~> z)) where
+  merge' _  = (:.>)
+instance Merge' False s t () where
+  merge' _ _ _ = ()
+  
+instance (SingI flag, MergePred s t flag, Merge' flag s t r) => Merge s t r where
+  (<>) = merge' (sing :: Sing flag)
+
+test1 = L Eis <> L Tosouton
+test2 = L Thn <> L Euryteian <> L Oistha <> L Dhta <> L Parthenon
+test3 = L Pedas <> (L Ebale <> L DNull <> L Xryseias)
+test4 = L Ekeinon <> L Eidon <> L Ton <> L Andra
+test5 = L Naumaxia <> (L Gignetai <> (L APPL <> L Ep' <> L DNull <> L Aiginhi) <> L DNull <> L Megalh)
