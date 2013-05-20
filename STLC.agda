@@ -5,7 +5,7 @@ import Types
 
 module STLC (T : Set) (Axiom : Types.Ty T → Set) where
 
-open Types T public
+open Types T 
 
 open import Kit.Equality
 open import Kit.Utility
@@ -67,7 +67,7 @@ closed? (var x) = nothing
 closed? (lam x) = nothing
 closed? (f ∙ x) = _∙_ <$> closed? f ⊛ closed? x
 
-closed : ∀ {V τ} (e : Term V τ) {c : Closed τ} {p : closed? e ≅ just c} → Closed τ
+closed : ∀ {τ} (e : Term (λ _ → ⊥) τ) {c : Closed τ} {p : closed? e ≅ just c} → Closed τ
 closed e {c} = c
 
 ⟦_⟧≅_ : ∀ {τ} → Tm τ → Tm τ → Set₁

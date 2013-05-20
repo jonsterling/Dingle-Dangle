@@ -1,5 +1,5 @@
 import STLC
-import Types
+open import Types
 
 module Syntax (T : Set) (L : Types.Ty T → Set) where
 
@@ -7,14 +7,14 @@ module SynCalculus = STLC T L
 open SynCalculus
 
 infixl 8 _>_ _<_ _⊙>_ _<⊙_
-data DTm : Ty → Set where
+data DTm : Ty _ → Set where
   `_   : ∀ {σ} → L σ → DTm σ
   _>_  : ∀ {σ τ} → DTm (σ ⇒ τ) → DTm σ → DTm τ
   _<_  : ∀ {σ τ} → DTm σ → DTm (σ ⇒ τ) → DTm τ
   _⊙>_ : ∀ {ρ σ τ} → DTm (σ ⇒ τ) → DTm (ρ ⇒ σ) → DTm (ρ ⇒ τ)
   _<⊙_ : ∀ {ρ σ τ} → DTm (ρ ⇒ σ) → DTm (σ ⇒ τ) → DTm (ρ ⇒ τ)
 
-data DTmR : Ty → Set where
+data DTmR : Ty _ → Set where
   `_  : ∀ {σ} → L σ → DTmR σ
   _∙_ : ∀ {σ τ} → DTmR (σ ⇒ τ) → DTmR σ → DTmR τ
   _⊙_ : ∀ {ρ σ τ} → DTmR (σ ⇒ τ) → DTmR (ρ ⇒ σ) → DTmR (ρ ⇒ τ)

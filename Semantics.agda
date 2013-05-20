@@ -19,6 +19,7 @@ module SemanticsAxioms where
 
 module SemCalculus W where
   open SemanticsAxioms public
+  open Types
   open STLC Kinds (Axiom W) public
 
   _∧_ : ∀ {V} → Term V ⟨ T ⟩ → Term V ⟨ T ⟩ → Term V ⟨ T ⟩

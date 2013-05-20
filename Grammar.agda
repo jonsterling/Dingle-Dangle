@@ -1,6 +1,7 @@
 module Grammar where
 
-open import STLC
+open import Types
+import STLC
 open import Semantics
 open import Syntax
 
@@ -20,7 +21,7 @@ mutual
 
 module Interpretation (g : Grammar) where
   open Grammar g
-  open Lambda
+  open STLC
 
   ⟦_⟧* : Ty Categories → Ty Kinds
   ⟦_⟧* = denote ⟦_⟧-cat
