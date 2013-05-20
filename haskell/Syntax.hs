@@ -18,7 +18,6 @@
 module Syntax where
 
 import GHC.TypeLits
-import TypeCast
 
 infixr :~>
 data Ty cat :: * where
@@ -129,8 +128,9 @@ data instance Sing (a :: Bool) where
 instance SingI True where sing = STrue
 instance SingI False where sing = SFalse
 
+
 class MergePred a b (flag :: Bool) | a b -> flag
-instance TypeCast flag False => MergePred a b flag
+instance flag ~ False => MergePred a b flag
 instance MergePred (Expr lex (C x :~> y)) (Expr lex (C x)) True
 instance MergePred (Expr lex (C x)) (Expr lex (C x :~> y)) True
 instance MergePred (Expr lex (x :~> y)) (Expr lex (y :~> z)) True
