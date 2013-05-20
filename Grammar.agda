@@ -3,6 +3,8 @@ module Grammar where
 open import Calculus
 open import Semantics
 open import Syntax
+open import Kit.Equality
+open import Kit.Empty
 
 mutual
   record Grammar : Set₁ where
@@ -11,18 +13,23 @@ mutual
       Lexicon : Ty Categories → Set
       Semantics : Ty Kinds → Set
       ⟦_⟧-cat : Categories → Ty Kinds
-      ⟦_⟧-lex : ∀ {σ} → Lexicon σ → SemCalculus.Tm Semantics ε (denote ⟦_⟧-cat σ)
+      ⟦_⟧-lex : ∀ {σ} → Lexicon σ → SemCalculus.Tm Semantics (denote ⟦_⟧-cat σ)
 
   denote : ∀ {Cat : Set} → (Cat → Ty Kinds) → Ty Cat → Ty Kinds
   denote ck ⟨ x ⟩ = ck x
   denote ck (σ ⇒ τ) = denote ck σ ⇒ denote ck τ
 
-open Grammar {{...}} public
-open Lambda
 
-⟦_⟧* : ∀ {{g : Grammar}} → Ty Categories → Ty Kinds
-⟦_⟧* = denote ⟦_⟧-cat
+module Interpretation (g : Grammar) where
+  open Grammar g
+  open Lambda
 
-⟦_⟧ : ∀ {{g : Grammar}} {σ} → SynCalculus.Closed Categories Lexicon σ → SemCalculus.Tm Semantics ε ⟦ σ ⟧*
-⟦_⟧ {{g}} (` x) = ⟦ x ⟧-lex
-⟦_⟧ {{g}} (f ∙ x) = ⟦ f ⟧ ∙ ⟦ x ⟧
+  ⟦_⟧* : Ty Categories → Ty Kinds
+  ⟦_⟧* = denote ⟦_⟧-cat
+  
+  ⟦_⟧ : ∀ {σ} → SynCalculus.Closed Categories Lexicon σ → SemCalculus.Tm Semantics ⟦ σ ⟧*
+  ⟦ ` x ⟧ = ⟦ x ⟧-lex
+  ⟦ e ∙ e₁ ⟧ = ⟦ e ⟧ ∙ ⟦ e₁ ⟧
+
+open Interpretation {{...}} public
+

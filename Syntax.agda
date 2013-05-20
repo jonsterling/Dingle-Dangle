@@ -18,17 +18,17 @@ data DTmR : Ty T → Set where
   _∙_ : ∀ {σ τ} → DTmR (σ ⇒ τ) → DTmR σ → DTmR τ
   _⊙_ : ∀ {ρ σ τ} → DTmR (σ ⇒ τ) → DTmR (ρ ⇒ σ) → DTmR (ρ ⇒ τ)
 
-erase-dir : ∀ {σ} → DTm σ → DTmR σ
-erase-dir (` x) = ` x
-erase-dir (f > x) = erase-dir f ∙ erase-dir x
-erase-dir (x < f) = erase-dir f ∙ erase-dir x
-erase-dir (f ⊙> g) = erase-dir f ⊙ erase-dir g
-erase-dir (g <⊙ x) = erase-dir x ⊙ erase-dir g
+⟦_⟧⇔ : ∀ {σ} → DTm σ → DTmR σ
+⟦ ` x    ⟧⇔ = ` x
+⟦ f > x  ⟧⇔ = ⟦ f ⟧⇔ ∙ ⟦ x ⟧⇔
+⟦ x < f  ⟧⇔ = ⟦ f ⟧⇔ ∙ ⟦ x ⟧⇔
+⟦ f ⊙> g ⟧⇔ = ⟦ f ⟧⇔ ⊙ ⟦ g ⟧⇔
+⟦ g <⊙ x ⟧⇔ = ⟦ x ⟧⇔ ⊙ ⟦ g ⟧⇔
 
-to-lambda : ∀ {Γ σ} → DTmR σ → Tm Γ σ
-to-lambda (` x) = ` x
-to-lambda (f ∙ x) = to-lambda f ∙ to-lambda x
-to-lambda (f ⊙ g) = ƛ (to-lambda f ∙ (to-lambda g ∙ var vz))
+⟦_⟧λ : ∀ {σ} → DTmR σ → Tm σ
+⟦ ` x   ⟧λ = ` x
+⟦ f ∙ x ⟧λ = ⟦ f ⟧λ ∙ ⟦ x ⟧λ
+⟦ f ⊙ g ⟧λ = ƛ x ⇒ ⟦ f ⟧λ ∙ (⟦ g ⟧λ ∙ var x)
 
-interpret : ∀ {Γ σ} → DTm σ → Tm Γ σ
-interpret x = to-lambda (erase-dir x)
+interpret : ∀ {σ} → DTm σ → Tm σ
+interpret x = ⟦ ⟦ x ⟧⇔ ⟧λ

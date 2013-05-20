@@ -3,13 +3,14 @@ module Greek where
 open import Calculus
 open import Semantics
 open import Kit.Equality
+open import Kit.Empty
 
 
 module GreekGrammar where
   open Semantics
   open import Grammar public
 
-  open Lambda using (ƛ; _∙_; var; `_)
+  open Lambda
   
   data Cat : Set where
     N D V P : Cat
@@ -33,12 +34,12 @@ module GreekGrammar where
   ⟦ V ⟧c = ⟨ T ⟩
   ⟦ P ⟧c = pred
 
-  ⟦_⟧l : ∀ {σ} → Lex σ → SemCalculus.Tm Sem ε (denote ⟦_⟧c σ)
+  ⟦_⟧l : ∀ {σ} → Lex σ → SemCalculus.Tm Sem (denote ⟦_⟧c σ)
   ⟦ τὴν       ⟧l = ` ι
-  ⟦ εὐρυτείαν ⟧l = ƛ (ƛ (` ∧ ∙ (var (vs vz) ∙ var vz) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var vz)))
+  ⟦ εὐρυτείαν ⟧l = ƛ x ⇒ ƛ y ⇒ ` ∧ ∙ (var x ∙ var y) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var y)
   ⟦ παρθένον  ⟧l = ` w ⟦παρθένον⟧
   ⟦ οἶσθα     ⟧l = ` w ⟦οἶσθα⟧
-  ⟦ δῆτα      ⟧l = ƛ (var vz)
+  ⟦ δῆτα      ⟧l = ƛ x ⇒ var x
   
   greek : Grammar
   greek = record {
@@ -58,7 +59,6 @@ module Examples where
   -- The following encoding suffices:
   sentence = ` τὴν ⊙> ` εὐρυτείαν <⊙ ` οἶσθα <⊙ ` δῆτα > ` παρθένον
 
-
   module TestSyntax where
     open GreekGrammar.SynCalculus
 
@@ -71,7 +71,7 @@ module Examples where
     test-syntax = refl
 
     ex-closed-form : Closed ⟨ V ⟩
-    ex-closed-form = closed (nm (interpret sentence) ε)
+    ex-closed-form = closed {λ _ → ⊥} (normalize (interpret sentence))
 
   module TestSemantics where
     open SemCalculus Sem
@@ -80,7 +80,7 @@ module Examples where
     -- We can interpret the syntactic representation into Logical Form:
     --
     --    ⟦οἶσθα⟧(ιz. ⟦παρθένον⟧(z) ∧ ⟦εὐρυτείαν⟧(z))
-    --
-    test-semantics : ⟦ ⟦ ex-closed-form ⟧ ⟧≅ (` w ⟦οἶσθα⟧ ∙ (` ι ∙ ƛ (` ∧ ∙ (` w ⟦παρθένον⟧ ∙ var vz) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var vz))))
+    
+    test-semantics : ⟦ ⟦ ex-closed-form ⟧ ⟧≅  (` w ⟦οἶσθα⟧ ∙ (` ι ∙ (ƛ x ⇒ ` ∧ ∙ (` w ⟦παρθένον⟧ ∙ var x) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var x))))
     test-semantics = refl
 
