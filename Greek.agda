@@ -35,8 +35,8 @@ module GreekGrammar where
   ⟦ P ⟧c = pred
 
   ⟦_⟧l : ∀ {σ} → Lex σ → SemCalculus.Tm Sem (denote ⟦_⟧c σ)
-  ⟦ τὴν       ⟧l = ` ι
-  ⟦ εὐρυτείαν ⟧l = ƛ x ⇒ ƛ y ⇒ ` ∧ ∙ (var x ∙ var y) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var y)
+  ⟦ τὴν       ⟧l = ` iota
+  ⟦ εὐρυτείαν ⟧l = ƛ x ⇒ ƛ y ⇒ ` and ∙ (var x ∙ var y) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var y)
   ⟦ παρθένον  ⟧l = ` w ⟦παρθένον⟧
   ⟦ οἶσθα     ⟧l = ` w ⟦οἶσθα⟧
   ⟦ δῆτα      ⟧l = ƛ x ⇒ var x
@@ -81,6 +81,6 @@ module Examples where
     --
     --    ⟦οἶσθα⟧(ιz. ⟦παρθένον⟧(z) ∧ ⟦εὐρυτείαν⟧(z))
     
-    test-semantics : ⟦ ⟦ ex-closed-form ⟧ ⟧≅  (` w ⟦οἶσθα⟧ ∙ (` ι ∙ (ƛ x ⇒ ` ∧ ∙ (` w ⟦παρθένον⟧ ∙ var x) ∙ (` w ⟦εὐρυτείαν⟧ ∙ var x))))
+    test-semantics : ⟦ ⟦ ex-closed-form ⟧ ⟧≅ (` w ⟦οἶσθα⟧ ∙ (ι z ⇒ (` w ⟦παρθένον⟧ ∙ var z) ∧ (` w ⟦εὐρυτείαν⟧ ∙ var z)))
     test-semantics = refl
 
