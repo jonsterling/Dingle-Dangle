@@ -1,10 +1,8 @@
 module Grammar where
 
-open import Calculus
+open import STLC
 open import Semantics
 open import Syntax
-open import Kit.Equality
-open import Kit.Empty
 
 mutual
   record Grammar : Set₁ where

@@ -1,6 +1,6 @@
 module Greek where
 
-open import Calculus
+open import STLC
 open import Semantics
 open import Kit.Equality
 open import Kit.Empty
