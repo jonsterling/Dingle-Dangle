@@ -28,6 +28,7 @@ module GreekGrammar where
     ⟦εὐρυτείαν⟧ : Sem pred
     ⟦παρθένον⟧  : Sem pred
     ⟦οἶσθα⟧     : Sem pred
+
   ⟦_⟧c : Cat → Ty Kinds
   ⟦ N ⟧c = pred
   ⟦ D ⟧c = ⟨ E ⟩
